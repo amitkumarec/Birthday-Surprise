@@ -476,6 +476,13 @@ I hope life has been kind to you. I hope you've found happiness, peace, and all 
 
         gallery.addEventListener('pointerup', finishGalleryDrag);
         gallery.addEventListener('pointercancel', finishGalleryDrag);
+        document.addEventListener("click", function () {
+    const music = document.getElementById("bg-music");
+
+    if (music && music.paused) {
+        music.play().catch(err => console.log(err));
+    }
+}, { once: true });
     </script>
 </body>
 </html>
