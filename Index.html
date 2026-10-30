@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            /* Prevents highlight tap-flash on mobile */
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        html, body {
+            /* Prevents pull-to-refresh and bounce effects on mobile */
+            overscroll-behavior: none; 
+            background-color: #fdf5f6;
+            color: #333;
+            overflow: hidden; 
+            /* Uses dynamic viewport height to account for mobile browser UI bars */
+            height: 100dvh; 
+            width: 100vw;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s;
+            padding: 6vw; /* Responsive padding */
+        }
+
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Screen Backgrounds */
+        #screen-2 { background-color: #111; color: #fff; }
+        #screen-3 { background: linear-gradient(135deg, #ffe6e6, #f0e6ff); }
+
+        /* Mobile-Responsive Typography */
+        h1, h2 {
+            font-family: 'Dancing Script', cursive;
+            color: #d84374;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        h1 { font-size: clamp(2.8rem, 10vw, 4rem); }
+        h2 { font-size: clamp(2rem, 8vw, 3rem); }
+        #screen-2 h2 { color: #fff; }
+
+        p {
+            font-size: clamp(1rem, 4.5vw, 1.15rem);
+            margin-bottom: 25px;
+            width: 90%;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        /* Mobile-Optimized Buttons */
+        button {
+            background-color: #f26b8a;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(242, 107, 138, 0.4);
+            transition: transform 0.15s, background-color 0.15s;
+            z-index: 10;
+            width: 85%; /* Wide buttons are easier to tap */
+            max-width: 320px;
+            /* Prevents double-tap to zoom */
+            touch-action: manipulation; 
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background-color: #d84374;
+        }
+
+        /* Graphics */
+        .graphic {
+            font-size: clamp(4.5rem, 20vw, 7rem);
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Scrollable photo strip */
+        .gallery {
+            display: block;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+            touch-action: pan-x;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            scroll-behavior: auto;
+        }
+
+        .gallery::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gallery.dragging {
+            cursor: grabbing;
+        }
+
+        .gallery-track,
+        .gallery-group {
+            display: flex;
+            width: max-content;
+        }
+
+        .gallery-group {
+            flex: 0 0 auto;
+            gap: 12px;
+            padding-right: 12px;
+        }
+
+        .gallery-img {
+            flex: 0 0 clamp(170px, 42vw, 240px);
+            width: clamp(170px, 42vw, 240px);
+            aspect-ratio: 4 / 5;
+            padding: 8px 8px 22px;
+            background-color: #fff;
+            object-fit: contain;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+            -webkit-user-drag: none;
+        }
+
+        /* Mobile Letter Container */
+        .letter {
+            background: white;
+            padding: 25px 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            text-align: left;
+            width: 95%;
+            max-width: 380px;
+            margin-bottom: 25px;
+            max-height: 60dvh;
+            overflow-y: auto; /* Allows scrolling if letter is long */
+        }
+
+        #screen-8 .apology-message {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.35rem;
+            line-height: 1.6;
+        }
+
+        .forgiveness-meter {
+            width: 90%;
+            max-width: 380px;
+            margin: 20px 0 25px;
+        }
+
+        .forgiveness-meter-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .forgiveness-meter-track {
+            width: 100%;
+            height: 24px;
+            overflow: hidden;
+            background: #f3d9df;
+            border: 2px solid #fff;
+            border-radius: 999px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .forgiveness-meter-fill {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #f26b8a, #d84374);
+            border-radius: inherit;
+            transition: width 0.3s ease;
+        }
+
+        .forgiveness-heart {
+            width: auto;
+            min-width: 0;
+            margin-top: 16px;
+            padding: 4px 12px;
+            background: transparent;
+            box-shadow: none;
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .forgiveness-heart:active {
+            background: transparent;
+        }
+
+        .forgiveness-heart:disabled {
+            cursor: default;
+        }
+
+        .forgiveness-instruction {
+            margin: 8px 0 0;
+            font-size: 0.9rem;
+        }
+
+        .forgiveness-message {
+            min-height: 3em;
+            margin: 12px 0 0;
+            color: #d84374;
+            font-weight: 600;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Interactive Cake */
+        #cake-container {
+            font-size: clamp(6rem, 25vw, 9rem);
+            margin-bottom: 20px;
+            user-select: none; /* Prevents text selection overlay when tapping */
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="C:\Birthday\Haareya.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="screen-1" class="screen active">
+        <div class="graphic">💌</div>
+        <h2>There's something for you</h2>
+        <p>A tiny birthday surprise, I made just for you.</p>
+        <button onclick="startSurprise()">Open your surprise 🪄</button>
+    </div>
+
+    <div id="screen-2" class="screen">
+        <h2>Shhh...</h2>
+        <p>The room is waiting for you.<br>I left the lights off on purpose.</p>
+        <button onclick="nextScreen(3)">Turn on the lights 💡</button>
+    </div>
+
+    <div id="screen-3" class="screen">
+        <div class="graphic">🧸🎈</div>
+        <h1>Happy Birthday,<br>Arpita!</h1>
+        <p>Yayy...It's your birthday...</p>
+        <button onclick="nextScreen(4)">There's more ✨</button>
+    </div>
+
+    <div id="screen-4" class="screen">
+        <h2>Make the first cut</h2>
+        <p>Tap the cake to cut a slice.</p>
+        <div id="cake-container" onclick="cutCake()">🎂</div>
+        <button id="cake-btn" style="display: none;" onclick="nextScreen(5)">Make a wish 💫</button>
+    </div>
+
+    <div id="screen-5" class="screen">
+        <div class="graphic">🙏✨</div>
+        <h2>Close your eyes...</h2>
+        <p>Make a little wish for the year ahead.</p>
+        <button onclick="nextScreen(6)">I made my wish 💖</button>
+    </div>
+
+    <div id="screen-6" class="screen">
+        <h2>Some moments I'll never forget.</h2>
+        <div class="gallery" role="region" aria-label="Scrollable photo memories" tabindex="0">
+            <div class="gallery-track">
+                <div class="gallery-group">
+                    <img src="Photo 1.jpeg" alt="Memory 1" class="gallery-img">
+                    <img src="Photo 2.jpeg" alt="Memory 2" class="gallery-img">
+                    <img src="Photo 3.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 4.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 5.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 6.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 7.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 8.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 9.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 10.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 11.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 12.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 13.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 14.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 15.jpg" alt="Memory 3" class="gallery-img">
+                    <img src="Photo 16.jpg" alt="Memory 3" class="gallery-img">
+                </div>
+            </div>
+        </div>
+        <button onclick="nextScreen(7)">Read your letter 💌</button>
+    </div>
+
+    <div id="screen-7" class="screen">
+        <div class="letter">
+            <h2 style="font-size: 1.8rem;">For you, Arpita</h2>
+            <p style="font-size: 0.95rem; margin-bottom: 0; width: 100%;">
+               I don't know where life has taken your heart these days, or what dreams you're chasing now, but I hope today finds you happy.<BR><BR>On your birthday, I found myself thinking about so many of the moments we shared. The late-night conversations that somehow stretched into the early hours, the ridiculous inside jokes that only made sense to us, the silly arguments, the laughter, and all the little moments in between that became some of my favourite memories. You had a way of making ordinary days feel important, and even the simplest conversations with you became memories I still look back on fondly.<BR><BR>
+I always hoped you knew how special you were, not just on birthdays, but on all those ordinary days when you couldn't quite see yourself the way others did. You carried a kindness, warmth, and lightness that quietly found its way into people's lives, often without you even realising it.<BR><BR>
+Even though things are different now, there are some things I still wish for you. I hope life has been gentle with your heart. I hope you've found reasons to smile on difficult days, courage when things felt uncertain, and happiness in places you never expected to discover it. Whatever dreams you were quietly holding close back then, I hope they're finding their way toward you. You deserved beautiful things then, and you still do now.<BR><BR>
+There was a time when I wished I could have been there beside you on your birthday, making you laugh, annoying you just enough to get a reaction, and finding a hundred little ways to make the day feel special. Distance often made me wish I could do more than words ever allowed. Looking back, one thing I'll always be grateful for is having had the chance to care about someone as deeply as I cared about you.<BR><BR>
+You became such a natural part of my days that I never really noticed when it happened. Somewhere between our conversations, our shared laughter, our disagreements, and all the moments neither of us thought were important at the time, you became someone who mattered immensely to me. And while life eventually took us down different paths, that doesn't take away the value of what we shared.<BR><BR>
+So today, I simply hope you're surrounded by love in all the ways that matter. I hope you laugh until your stomach hurts, eat all your favourite things without guilt, and create a few memories worth holding on to. Most of all, I hope the year ahead brings you closer to the life you've always wanted and to the kind of happiness that stays.<BR><BR>
+Thank you for the memories, for the lessons, for the laughter, and for a chapter of my life that I'll always remember with a smile.<BR><BR>
+<B>Happy Birthday.<BR>
+ Take care of yourself. Always.</B><BR><I>
+— Amit</I>
+        </div>
+        <button onclick="nextScreen(8)">Continue 💌</button>
+    </div>
+
+    <div id="screen-8" class="screen">
+        <h2>An Apology from my end</h2>
+        <div class="letter">
+            <p class="apology-message" style="margin-bottom: 0; width: 100%;">
+                I've been wanting to say this for a long time, and no matter how many times I try to put it into words, it never feels enough.<BR><BR>
+<B>I'm sorry.</B><BR><BR>
+Not just for the message I sent that day, but for the anger, the hurtful words, and the way I chose to handle everything. Looking back, I can see how much anger and frustration had built up inside me, but that still doesn't justify what I said or did.<BR><BR>
+The truth is, instead of calmly explaining what I was feeling, I let my emotions take control. I turned my frustration into anger, and then I directed that anger at you.<BR><BR>
+The message I sent you was cruel. I said things that I don't truly believe, things I should never have said to someone I loved. Calling you names, attacking your character, saying that you were dead to me, and blocking you immediately afterward were immature and deeply unfair. You deserved better from me, even in the middle of a fight.<BR><BR>
+What hurts me the most now is remembering the sketch.<BR><BR>
+I had spent weeks making it. After long days and exhaustion, I would still sit down and work on it because it was meant for you. It wasn't just a drawing. It carried my time, effort, affection, and the happiness I felt imagining your reaction. In a moment of anger, I tore it apart and burned it.<BR><BR>
+At the time, I thought I was expressing my frustration. Now I realize I was destroying something beautiful because I couldn't control my emotions. The sketch deserved better, and so did you.<BR><BR>
+I also want you to know something that I failed to explain back then. I hadn't ignored Valentine's Day because I didn't care. I had actually been thinking about gifts and ways to make the day special. When you mentioned you were staying at your sister's place, I wasn't sure how to surprise you or where to send anything. Instead of talking openly about that confusion and misunderstanding, I became defensive and resentful.<BR><BR>
+But even if I had valid feelings, I handled them in the worst possible way.<BR>
+I wish I had paused. I wish I had listened. I wish I had chosen understanding over anger.<BR><BR>
+Maybe we both misunderstood each other, but I can only take responsibility for my part, and my part was ugly. For that, I am genuinely sorry.<BR><BR>
+I'm not writing this letter to force forgiveness, erase the past, or make you feel guilty. I simply don't want the last memory of me to be that version of myself. You knew me at my best, but unfortunately you also saw me at my worst, and I deeply regret that.<BR><BR>
+Despite everything that happened, I am grateful for the moments we shared, the conversations, the laughter, the memories, and all the ways you became an important part of my life.<BR><BR>
+You deserved kindness from me that day, and instead you got anger.<BR><BR>
+For that, I am truly sorry.<BR><BR>
+I hope life has been kind to you. I hope you've found happiness, peace, and all the beautiful things you always deserved.<BR><BR>
+
+<B>Take care.</B>
+            </p>
+        </div>
+        <button onclick="nextScreen(9)">Continue 💖</button>
+    </div>
+
+    <div id="screen-9" class="screen">
+        <h2>Forgiveness meter</h2>
+        <div class="forgiveness-meter">
+            <span id="forgiveness-value" class="forgiveness-meter-label">0%</span>
+            <div
+                id="forgiveness-bar"
+                class="forgiveness-meter-track"
+                role="progressbar"
+                aria-label="Forgiveness meter"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0">
+                <div class="forgiveness-meter-fill"></div>
+            </div>
+            <button
+                id="forgiveness-heart"
+                class="forgiveness-heart"
+                type="button"
+                aria-label="Increase forgiveness meter by 10 percent"
+                onclick="increaseForgiveness()">❤️</button>
+            <p id="forgiveness-instruction" class="forgiveness-instruction">
+                Tap on the heart symbol to forgive me
+            </p>
+            <p id="forgiveness-message" class="forgiveness-message" aria-live="polite"></p>
+        </div>
+        <button onclick="nextScreen(10)">One Last Thing 🎀</button>
+    </div>
+
+    <div id="screen-10" class="screen">
+        <div class="graphic">🥳🎁</div>
+        <h1>Happy Birthday!</h1>
+        <p>I hope this year brings you everything you've been dreaming of and more. May you stay happy, healthy, loved, and surrounded by people who genuinely care about you. Keep smiling, keep shining, and never stop believing in yourself. Wishing you endless happiness and beautiful moments ahead.<br><br>- Amit</p>
+        <button onclick="location.reload()">Replay the surprise 🔄</button>
+    </div>
+
+    <script>
+        function startSurprise() {
+            const music = document.getElementById('bg-music');
+            music.play().catch(error => console.log("Audio autoplay prevented."));
+            nextScreen(2);
+        }
+
+        function nextScreen(screenNumber) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            const next = document.getElementById(`screen-${screenNumber}`);
+            if (next) {
+                next.classList.add('active');
+            }
+        }
+
+        function cutCake() {
+            const cake = document.getElementById('cake-container');
+            const btn = document.getElementById('cake-btn');
+            cake.innerHTML = '🍰';
+            btn.style.display = 'inline-block';
+        }
+
+        let forgiveness = 0;
+
+        function increaseForgiveness() {
+            forgiveness = Math.min(forgiveness + 10, 100);
+            document.getElementById('forgiveness-instruction').hidden = true;
+            document.querySelector('.forgiveness-meter-fill').style.width = `${forgiveness}%`;
+            document.getElementById('forgiveness-value').textContent = `${forgiveness}%`;
+            document.getElementById('forgiveness-bar').setAttribute('aria-valuenow', forgiveness);
+
+            if (forgiveness === 100) {
+                document.getElementById('forgiveness-message').textContent =
+                    'Finally, you have forgiven me. You are so sweet.';
+                document.getElementById('forgiveness-heart').disabled = true;
+            }
+        }
+
+        const gallery = document.querySelector('.gallery');
+
+        let dragPointerId = null;
+        let dragStartX = 0;
+        let dragStartScroll = 0;
+
+        gallery.addEventListener('pointerdown', event => {
+            if (event.pointerType === 'mouse' && event.button === 0) {
+                event.preventDefault();
+                dragPointerId = event.pointerId;
+                dragStartX = event.clientX;
+                dragStartScroll = gallery.scrollLeft;
+                gallery.classList.add('dragging');
+                gallery.setPointerCapture(event.pointerId);
+            }
+        });
+
+        gallery.addEventListener('pointermove', event => {
+            if (event.pointerId === dragPointerId) {
+                gallery.scrollLeft = dragStartScroll - (event.clientX - dragStartX);
+            }
+        });
+
+        function finishGalleryDrag(event) {
+            if (event.pointerId === dragPointerId) {
+                dragPointerId = null;
+                gallery.classList.remove('dragging');
+            }
+        }
+
+        gallery.addEventListener('pointerup', finishGalleryDrag);
+        gallery.addEventListener('pointercancel', finishGalleryDrag);
+    </script>
+</body>
+</html>
